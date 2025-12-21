@@ -1,0 +1,37 @@
+services:
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: weather
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d
+
+  generator:
+    build: .
+    depends_on:
+      - db
+
+  redash:
+    image: redash/redash:8.0.0.b32245
+    container_name: redash_server
+    environment:
+      REDASH_DATABASE_URL: "postgresql://postgres:postgres@db:5432/weather"
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+
+  jupyter:
+    build: ./jupyter
+    container_name: weather_jupyter
+    volumes:
+      - ./notebooks:/home/jovyan/work
+    ports:
+      - "8888:8888"
+    depends_on:
+      - db
+
